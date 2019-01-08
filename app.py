@@ -4,10 +4,11 @@ from werkzeug.utils import secure_filename
 import os
 import pandas as pd
 
-
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'waduhek'
-ALLOWED_EXT = {'csv','tsv', 'xlsx'}
+ALLOWED_EXT = {'csv','xlsx'}
+
+
 @app.route('/',methods=['GET','POST'])
 def index():
     form = FileForm()
@@ -18,8 +19,25 @@ def index():
             form.file.data.save('uploads/' + filename)
         else:
             flash('Incorrect format selected, please try again!')
-        return redirect(url_for('pand'))
+        return redirect(url_for('index'))
     return render_template('index.html', form=form)
 
+@app.route('/pandas')
+def pand():
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    data_path = os.path.join(dir_path, 'uploads')
+    data = os.listdir(data_path)[0]
+    print(type(data))
+    df = read_ext(data).head(5)
+    return render_template('pandas.html',filename=data,df = df.to_html(classes=['table table-dark']))
+
+
+
+def read_ext(data):
+    if (data.split('.'))[1] == 'csv':
+        return pd.read_csv('uploads/'+data)
+
+    if (data.split('.'))[1] == 'xlsx':
+        return pd.read_excel('uploads/'+data)
 if __name__ == "__main__":
     app.run(debug=True)
